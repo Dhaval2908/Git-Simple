@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css"> <!-- Correctly link your stylesheet -->
+    <title><%= repoName %></title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Basic styles for layout */
+        .container {
+            display: flex;
+            width: 100%;
+        }
+        .sidebar {
+            width: 250px;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            background: #f9f9f9;
+            overflow-y: auto; /* Allow scrolling if content exceeds height */
+        }
+        .content {
+            padding: 10px;
+            flex-grow: 1;
+            overflow-y: auto; /* Allow scrolling for content */
+        }
+        .directory ul {
+            display: none; /* Hide nested directories initially */
+            padding-left: 20px; /* Indent nested directories */
+        }
+        .directory-name {
+            cursor: pointer; /* Indicate that it's clickable */
+            color: blue;
+            text-decoration: underline;
+        }
+        .file-link {
+            cursor: pointer; /* Indicate that it's clickable */
+            color: green;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2><%= repoName %></h2>
+            <h3>Directories</h3>
+            <ul>
+                <% directories.forEach(dir => { %>
+                    <li class="directory">
+                        <span class="directory-name" data-path="<%= dir.path %>"><%= dir.name %></span>
+                        <ul>
+                            <% dir.subdirectories.files.forEach(file => { %>
+                                <li><a href="#" class="file-link" data-file="<%= file.name %>"><%= file.name %></a></li>
+                            <% }) %>
+                            <% dir.subdirectories.directories.forEach(subDir => { %>
+                                <li>
+                                    <span class="directory-name" data-path="<%= subDir.path %>"><%= subDir.name %></span>
+                                    <ul>
+                                        <!-- Optionally render further subdirectory contents here -->
+                                    </ul>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    </li>
+                <% }) %>
+            </ul>
+
+            <h3>Files</h3>
+            <ul>
+                <% files.forEach(file => { %>
+                    <li class="file">
+                        <a href="#" class="file-link" data-file="<%= file.name %>"><%= file.name %></a>
+                    </li>
+                <% }) %>
+            </ul>
+        </div>
+        <div class="content">
+            <h2>Content</h2>
+            <div id="fileContent"></div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Fetch and display file content on click
+            $('.file-link').click(function(event) {
+                event.preventDefault();
+                const fileName = $(this).data('file');
+
+                // Fetch the content from the backend
+                $.get(`/repos/<%= repoName %>/${fileName}`, function(data) {
+                    $('#fileContent').html('<h3>' + fileName + '</h3>' + `<pre>${data || ''}</pre>`);
+                }).fail(function() {
+                    $('#fileContent').html('<h3>Error loading file content.</h3>');
+                });
+            });
+
+            // Toggle visibility of directory contents
+            $('.directory-name').click(function() {
+                $(this).siblings('ul').toggle(); // Toggle visibility of nested directories
+            });
+        });
+    </script>
+</body>
+</html>
